@@ -1,0 +1,1951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#9E1B32">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Khata">
+<title>Khata — offline ledger</title>
+<style>
+:root{
+  --cloth:#9E1B32;
+  --cloth-deep:#6E0F22;
+  --page:#FAF6EE;
+  --page-2:#FFFDF8;
+  --ink:#20263F;
+  --ink-soft:#6B7189;
+  --rule:#E0D6C6;
+  --get:#1E6F4F;
+  --give:#B3261E;
+  --thread:#F0C9A8;
+  --r:5px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--cloth-deep);
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans",Arial,sans-serif;
+  font-size:16px;line-height:1.4;
+  -webkit-font-smoothing:antialiased;
+}
+#app{
+  max-width:480px;margin:0 auto;min-height:100vh;
+  background:var(--page);
+  display:flex;flex-direction:column;
+  box-shadow:0 0 0 1px rgba(0,0,0,.25);
+}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2.5px solid var(--ink);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+/* ---------- cloth cover header ---------- */
+.cover{
+  background:linear-gradient(176deg,var(--cloth) 0%,var(--cloth-deep) 100%);
+  color:#fff;padding:14px 16px 18px;position:relative;
+}
+.cover::after{
+  content:"";position:absolute;left:14px;right:14px;bottom:7px;height:0;
+  border-top:2px dashed rgba(240,201,168,.45);
+}
+.cover-top{display:flex;align-items:center;gap:10px;min-height:34px}
+.shop{font-size:1.06rem;font-weight:700;letter-spacing:-.01em;flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cover-btn{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(0,0,0,.18);font-size:1.1rem}
+.cover-btn:active{background:rgba(0,0,0,.34)}
+
+.totals{display:flex;flex-wrap:wrap;margin-top:12px;background:rgba(255,253,248,.96);
+  border-radius:var(--r);overflow:hidden;color:var(--ink)}
+.tot{flex:1;padding:11px 13px 12px}
+.tot+.tot{border-left:1px solid var(--rule)}
+.tot span{display:block;font-size:.76rem;color:var(--ink-soft);margin-bottom:1px}
+.tot strong{font-size:1.28rem;font-weight:800}
+.tot.get strong{color:var(--get)}
+.tot.give strong{color:var(--give)}
+.closing{flex:0 0 100%;display:flex;justify-content:space-between;align-items:baseline;
+  gap:10px;padding:8px 13px 9px;border-top:1px solid var(--rule);background:#F6F1E7}
+.closing span{font-size:.78rem;color:var(--ink-soft)}
+.closing b{font-size:.94rem;font-weight:800}
+.caption{margin:9px 2px 0;font-size:.75rem;color:rgba(255,253,248,.8)}
+
+/* ---------- book switch + period chips ---------- */
+.switch{display:flex;gap:3px;margin-top:13px;padding:3px;border-radius:var(--r);
+  background:rgba(0,0,0,.22)}
+.switch button{flex:1;padding:8px 6px;border-radius:3px;font-size:.93rem;font-weight:600;
+  color:rgba(255,253,248,.74)}
+.switch button[aria-current="true"]{background:var(--page);color:var(--cloth-deep)}
+.switch small{font-size:.74rem;font-weight:700;opacity:.65;margin-left:5px}
+.chips{display:flex;gap:7px;overflow-x:auto;padding:10px 14px;background:var(--page-2);
+  border-bottom:1px solid var(--rule);scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:6px 12px;border:1px solid var(--rule);border-radius:15px;
+  font-size:.84rem;color:var(--ink-soft);background:var(--page)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}
+
+.search{padding:10px 14px;background:var(--page-2);border-bottom:1px solid var(--rule)}
+.search input{width:100%;padding:9px 11px;border:1px solid var(--rule);border-radius:var(--r);
+  background:var(--page);}
+.search input::placeholder{color:var(--ink-soft)}
+
+/* ---------- ruled list ---------- */
+main{flex:1;overflow-y:auto}
+.row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  padding:13px 14px;border-bottom:1px solid var(--rule);background:var(--page)}
+.row:active{background:#F2EBDF}
+.initial{width:38px;height:38px;flex:0 0 38px;border-radius:var(--r);display:grid;place-items:center;
+  background:#EFE4D2;color:var(--cloth-deep);font-weight:800;font-size:1rem}
+.row-mid{flex:1;min-width:0}
+.row-mid b{display:block;font-weight:600;font-size:1rem;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row-mid span{font-size:.8rem;color:var(--ink-soft)}
+.row-amt{text-align:right;flex:0 0 auto}
+.row-amt b{display:block;font-weight:800;font-size:1.03rem}
+.row-amt span{font-size:.72rem;color:var(--ink-soft)}
+.get{color:var(--get)}
+.give{color:var(--give)}
+.settled{color:var(--ink-soft)}
+
+/* ---------- ledger (two column register) ---------- */
+.sheet{background:var(--page-2);border-bottom:1px solid var(--rule);
+  display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px}
+.sheet span{font-size:.8rem;color:var(--ink-soft)}
+.sheet strong{font-size:1.35rem;font-weight:800}
+.colhead{display:flex;padding:7px 14px;background:#F2EBDF;
+  border-bottom:1px solid var(--rule);font-size:.75rem;color:var(--ink-soft)}
+.period{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  padding:8px 14px;background:#F6F1E7;border-bottom:1px solid var(--rule)}
+.period span{font-size:.78rem;color:var(--ink-soft)}
+.period b{font-size:.8rem;font-weight:600;color:var(--ink-soft);white-space:nowrap}
+.period b span{font-weight:800}
+.colhead i{font-style:normal;flex:1}
+.colhead u{text-decoration:none;width:84px;text-align:right}
+.entry{display:flex;width:100%;text-align:left;padding:11px 14px;cursor:pointer;
+  border-bottom:1px solid var(--rule);background:var(--page);align-items:flex-start}
+.entry:active{background:#F2EBDF}
+.entry-when{flex:1;min-width:0;padding-right:8px}
+.entry-when b{display:block;font-size:.85rem;font-weight:600}
+.entry-when span{font-size:.78rem;color:var(--ink-soft);
+  display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.entry-col{width:84px;text-align:right;font-weight:700;font-size:1rem}
+.entry-col.blank{color:var(--rule)}
+
+/* ---------- bill photos ---------- */
+.entry-shot{width:36px;height:36px;flex:0 0 36px;margin-right:10px;border-radius:4px;
+  overflow:hidden;border:1px solid var(--rule);background:#EFE4D2;position:relative}
+.entry-shot img{width:100%;height:100%;object-fit:cover;display:block}
+.entry-shot i{position:absolute;right:0;bottom:0;font-style:normal;font-size:.62rem;font-weight:700;
+  background:rgba(21,10,14,.72);color:#fff;padding:0 3px;border-radius:3px 0 0 0}
+.thumbs{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 13px}
+.thumb{position:relative;width:66px;height:66px;border-radius:var(--r);overflow:hidden;
+  border:1px solid var(--rule);background:#EFE4D2;flex:0 0 auto;padding:0}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .x{position:absolute;top:0;right:0;width:22px;height:22px;background:rgba(21,10,14,.74);
+  color:#fff;font-size:.78rem;display:grid;place-items:center;border-radius:0 0 0 var(--r)}
+.addshot{width:66px;height:66px;border:1.5px dashed var(--rule);border-radius:var(--r);
+  display:grid;place-items:center;color:var(--ink-soft);font-size:1.35rem;flex:0 0 auto;
+  background:var(--page-2)}
+.addshot:active{background:#F2EBDF}
+.viewer{position:fixed;inset:0;background:#120A0D;z-index:70;display:flex;flex-direction:column}
+.vtop{display:flex;align-items:center;gap:8px;padding:10px 12px;color:#fff;
+  padding-top:calc(10px + env(safe-area-inset-top))}
+.vtop b{flex:1;font-size:.88rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vtop button{color:#fff;width:36px;height:36px;border-radius:50%;font-size:1.15rem}
+.vbody{flex:1;display:grid;place-items:center;overflow:auto;padding:8px;color:#C9BFB4;font-size:.85rem}
+.vbody img{max-width:100%;max-height:100%;object-fit:contain}
+.vdots{display:flex;justify-content:center;gap:6px;padding:6px 0 2px}
+.vdots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.32)}
+.vdots i.on{background:#fff}
+.vnav{display:flex;gap:10px;padding:10px 12px;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.vnav button{flex:1;padding:12px;border-radius:var(--r);font-weight:600;color:#fff;
+  border:1.5px solid rgba(255,255,255,.26);background:rgba(255,255,255,.07)}
+.vnav button:active{background:rgba(255,255,255,.16)}
+.vnav button[disabled]{opacity:.32}
+.thumbs{align-items:flex-start}
+.shotcount{font-size:.82rem;color:var(--ink-soft);margin-bottom:4px;display:block}
+
+/* ---------- empty + footer actions ---------- */
+.empty{padding:44px 26px;text-align:center;color:var(--ink-soft)}
+.empty b{display:block;color:var(--ink);font-size:1.04rem;margin-bottom:5px}
+.dock{display:flex;gap:10px;padding:11px 14px;background:var(--page-2);
+  border-top:1px solid var(--rule);padding-bottom:calc(11px + env(safe-area-inset-bottom))}
+.btn{flex:1;padding:13px 10px;border-radius:var(--r);font-weight:700;text-align:center;
+  background:var(--ink);color:#fff}
+.btn:active{transform:translateY(1px)}
+.btn.out{background:var(--give)}
+.btn.in{background:var(--get)}
+.btn.quiet{background:transparent;color:var(--ink);border:1.5px solid var(--rule)}
+.btn[disabled]{opacity:.45}
+
+/* ---------- top bar (inner screens) ---------- */
+.bar{display:flex;align-items:center;gap:6px;background:var(--cloth);color:#fff;padding:9px 10px}
+.bar b{flex:1;font-size:1.02rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar button{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:1.15rem}
+.bar button:active{background:rgba(0,0,0,.25)}
+
+/* ---------- settings ---------- */
+.block{padding:16px 14px;border-bottom:1px solid var(--rule)}
+.block h2{margin:0 0 3px;font-size:1rem;font-weight:700}
+.block p{margin:0 0 12px;font-size:.85rem;color:var(--ink-soft)}
+.field{display:block;margin-bottom:11px}
+.field span{display:block;font-size:.82rem;color:var(--ink-soft);margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid var(--rule);
+  border-radius:var(--r);background:var(--page-2)}
+.field textarea{min-height:96px;resize:vertical;font-size:.86rem;font-family:ui-monospace,Menlo,Consolas,monospace}
+.pair{display:flex;gap:10px}
+.stack{display:flex;flex-direction:column;gap:9px}
+.stack .btn{flex:none}
+.picklist{max-height:44vh;overflow-y:auto;border:1px solid var(--rule);border-radius:var(--r);
+  background:var(--page-2);margin-bottom:13px}
+.pickrow{display:flex;align-items:center;gap:11px;padding:10px 12px;
+  border-bottom:1px solid var(--rule)}
+.pickrow:last-child{border-bottom:0}
+.pickrow input{width:21px;height:21px;flex:0 0 21px;accent-color:var(--cloth)}
+.pickrow span{min-width:0}
+.pickrow b{display:block;font-weight:600;font-size:.95rem;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pickrow em{font-style:normal;font-size:.78rem;color:var(--ink-soft)}
+.pickrow.had{opacity:.55}
+.danger{color:var(--give)}
+.note{font-size:.8rem;color:var(--ink-soft);margin:10px 0 0}
+
+/* ---------- sheet / modal ---------- */
+.veil{position:fixed;inset:0;background:rgba(21,10,14,.55);display:flex;
+  align-items:flex-end;justify-content:center;z-index:40}
+.card{width:100%;max-width:480px;background:var(--page);border-radius:12px 12px 0 0;
+  padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto}
+.card h3{margin:0 0 12px;font-size:1.06rem}
+.amount{display:flex;align-items:center;gap:8px;border:1px solid var(--rule);
+  border-radius:var(--r);padding:8px 11px;background:var(--page-2);margin-bottom:12px}
+.amount em{font-style:normal;font-size:1.4rem;color:var(--ink-soft)}
+.amount input{flex:1;border:0;background:none;font-size:1.7rem;font-weight:800;
+  padding:4px 0;min-width:0}
+.amount input:focus{outline:none}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:60;
+  background:var(--ink);color:#fff;padding:11px 16px;border-radius:var(--r);
+  font-size:.88rem;max-width:88%;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+@media (prefers-reduced-motion:no-preference){
+  .card{animation:up .18s ease-out}
+  .toast{animation:up .18s ease-out}
+  @keyframes up{from{transform:translateY(14px);opacity:.4}}
+  .toast{animation-name:fade}
+  @keyframes fade{from{opacity:0}}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<input type="file" id="picker" accept=".json,application/json" hidden>
+<input type="file" id="shot" accept="image/*" multiple hidden>
+<input type="file" id="vcf" accept=".vcf,.vcard,text/vcard,text/x-vcard,text/directory" hidden>
+
+<script>
+/* =======================================================================
+   Khata — offline ledger
+   All data lives on this device. Nothing is sent anywhere.
+   Storage: window.storage when running inside Claude, otherwise
+   localStorage when you open this file on your own phone.
+   ======================================================================= */
+
+const KEY = 'khata:data:v1';
+const shelf = () => (typeof window.storage !== 'undefined' && window.storage) ? window.storage : null;
+
+const Store = {
+  async get(key){
+    const s = shelf();
+    if (s){ try { const r = await s.get(key, false); return r ? r.value : null; } catch(e){ return null; } }
+    try { return window.localStorage.getItem(key); } catch(e){ return null; }
+  },
+  async set(key, text){
+    const s = shelf();
+    if (s){ try { await s.set(key, text, false); return true; } catch(e){ return false; } }
+    try { window.localStorage.setItem(key, text); return true; } catch(e){ return false; }
+  },
+  async del(key){
+    const s = shelf();
+    if (s){ try { await s.delete(key, false); } catch(e){} return; }
+    try { window.localStorage.removeItem(key); } catch(e){}
+  }
+};
+
+/* ---------------- bill photos ----------------
+   Each entry keeps a tiny thumbnail inline (so the ledger draws instantly)
+   and the full picture in its own storage slot, read only when opened.   */
+const PKEY = id => 'khata:photo:' + id;
+const MAX_SHOTS = 12;
+const Photos = {
+  put:  (id, dataUrl) => Store.set(PKEY(id), dataUrl),
+  get:  id => Store.get(PKEY(id)),
+  del:  id => Store.del(PKEY(id)),
+  async dropAll(entries){ for (const e of entries) for (const ph of (e.photos || [])) await Photos.del(ph.id); }
+};
+
+async function bitmapOf(file){
+  if (window.createImageBitmap){
+    try { return await createImageBitmap(file, {imageOrientation:'from-image'}); }
+    catch(e){ try { return await createImageBitmap(file); } catch(e2){} }
+  }
+  return await new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => { res(img); setTimeout(() => URL.revokeObjectURL(url), 1000); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('bad image')); };
+    img.src = url;
+  });
+}
+
+/* shrink a camera photo to something a backup file can carry */
+async function shrink(file){
+  const src = await bitmapOf(file);
+  const w = src.width || src.naturalWidth, h = src.height || src.naturalHeight;
+  const draw = (max, q) => {
+    const k = Math.min(1, max / Math.max(w, h));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(src, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', q);
+  };
+  let full = draw(1500, .72);
+  if (full.length > 700000) full = draw(1200, .6);
+  if (full.length > 700000) full = draw(900, .5);
+  if (src.close) src.close();
+  return {id:uid(), thumb:draw(150, .55), full, bytes:Math.round(full.length * 0.75)};
+}
+
+const readableSize = b => b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB'
+  : b >= 1024 ? Math.round(b / 1024) + ' KB' : b + ' B';
+function photoStats(){
+  let n = 0, bytes = 0;
+  state.entries.forEach(e => (e.photos || []).forEach(p => { n++; bytes += (p.bytes || 0); }));
+  return {n, bytes};
+}
+
+/* =======================================================================
+   Statement, PDF and sharing
+   The PDF is written by hand — no library, nothing downloaded. Each page
+   is drawn on a canvas and embedded as a JPEG, so Tamil, Hindi and the ₹
+   sign all come out exactly as they look on screen.
+   ======================================================================= */
+function b64bytes(dataUrl){
+  const bin = atob(String(dataUrl).split(',')[1] || '');
+  const u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return u;
+}
+function jpegPage(canvas, q){
+  const url = canvas.toDataURL('image/jpeg', q || .85);
+  return {bytes:b64bytes(url), w:canvas.width, h:canvas.height};
+}
+
+function pdfFromJpegs(pages){
+  const PW = 595.28, PH = 841.89;               // A4 in points
+  const enc = new TextEncoder();
+  const parts = []; let size = 0;
+  const put = s => { const u = enc.encode(s); parts.push(u); size += u.length; };
+  const raw = u => { parts.push(u); size += u.length; };
+  const offsets = [], mark = () => offsets.push(size);
+
+  put('%PDF-1.4\n');
+  raw(new Uint8Array([0x25,0xE2,0xE3,0xCF,0xD3,0x0A]));   // binary marker
+
+  const n = pages.length;
+  const pageIds = pages.map((_, i) => 3 + i * 3);
+  mark(); put('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+  mark(); put(`2 0 obj\n<< /Type /Pages /Count ${n} /Kids [${pageIds.map(i => i + ' 0 R').join(' ')}] >>\nendobj\n`);
+
+  pages.forEach((pg, i) => {
+    const pid = 3 + i * 3, cid = pid + 1, iid = pid + 2;
+    const k = Math.min(PW / pg.w, PH / pg.h);
+    const w = pg.w * k, h = pg.h * k;
+    const body = `q ${w.toFixed(2)} 0 0 ${h.toFixed(2)} ${((PW - w) / 2).toFixed(2)} ${((PH - h) / 2).toFixed(2)} cm /Im0 Do Q\n`;
+    mark(); put(`${pid} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}]`
+      + ` /Resources << /XObject << /Im0 ${iid} 0 R >> >> /Contents ${cid} 0 R >>\nendobj\n`);
+    mark(); put(`${cid} 0 obj\n<< /Length ${body.length} >>\nstream\n${body}endstream\nendobj\n`);
+    mark(); put(`${iid} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${pg.w} /Height ${pg.h}`
+      + ` /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${pg.bytes.length} >>\nstream\n`);
+    raw(pg.bytes); put('\nendstream\nendobj\n');
+  });
+
+  const start = size, total = 2 + n * 3;
+  let x = `xref\n0 ${total + 1}\n0000000000 65535 f \n`;
+  offsets.forEach(o => { x += String(o).padStart(10, '0') + ' 00000 n \n'; });
+  x += `trailer\n<< /Size ${total + 1} /Root 1 0 R >>\nstartxref\n${start}\n%%EOF\n`;
+  put(x);
+  return new Blob(parts, {type:'application/pdf'});
+}
+
+/* ---------------- draw the statement ---------------- */
+function statementCanvases(p, r){
+  const W = 1240, H = 1754, M = 70;
+  const all = ledgerOf(p.id);
+  const shown = r ? all.filter(e => e.date >= r.from && e.date <= r.to) : all;
+  const runs = new Map(); let run = 0;
+  all.forEach(e => { run += e.type === 'gave' ? +e.amount : -e.amount; runs.set(e.id, run); });
+  const mv = movement(p.id, r);
+  const closing = balanceAsOf(p.id, r ? r.to : null);
+  const opening = closing - (mv.gave - mv.got);
+
+  const per = 21;
+  const count = Math.max(1, Math.ceil(shown.length / per));
+  const cut = cutText;
+  const out = [];
+
+  for (let pi = 0; pi < count; pi++){
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    const F = (w, s) => `${w} ${s}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+    g.fillStyle = '#FFFDF8'; g.fillRect(0, 0, W, H);
+
+    g.fillStyle = '#9E1B32'; g.fillRect(0, 0, W, 186);
+    g.fillStyle = '#fff'; g.font = F(700, 46);
+    g.fillText(cut(g, state.business || 'My shop', 640), M, 84);
+    g.font = F(400, 27); g.fillStyle = 'rgba(255,253,248,.88)';
+    g.fillText('Account statement', M, 130);
+    g.textAlign = 'right';
+    g.font = F(700, 30); g.fillStyle = '#fff';
+    g.fillText(when(today()), W - M, 84);
+    g.font = F(400, 27); g.fillStyle = 'rgba(255,253,248,.88)';
+    g.fillText(p.type === 'customer' ? 'Customer' : 'Supplier', W - M, 130);
+    g.textAlign = 'left';
+
+    g.fillStyle = '#20263F'; g.font = F(700, 40);
+    g.fillText(cut(g, p.name, 700), M, 262);
+    g.fillStyle = '#6B7189'; g.font = F(400, 26);
+    g.fillText(p.phone ? p.phone : 'No phone saved', M, 300);
+    g.textAlign = 'right';
+    g.fillText(periodLabel(r), W - M, 300);
+    g.textAlign = 'left';
+
+    let y = 360;
+    g.strokeStyle = '#D9CFC0'; g.lineWidth = 2;
+    g.fillStyle = '#F2EBDF'; g.fillRect(M, y - 34, W - M * 2, 48);
+    g.fillStyle = '#6B7189'; g.font = F(600, 24);
+    g.fillText('Date', M + 14, y);
+    g.fillText('Details', 270, y);
+    g.textAlign = 'right';
+    g.fillText('You gave', 800, y); g.fillText('You got', 980, y); g.fillText('Balance', W - M - 14, y);
+    g.textAlign = 'left';
+    y += 14;
+
+    const slice = shown.slice(pi * per, pi * per + per);
+    slice.forEach(e => {
+      y += 50;
+      g.beginPath(); g.moveTo(M, y + 14); g.lineTo(W - M, y + 14); g.stroke();
+      g.fillStyle = '#20263F'; g.font = F(500, 26);
+      g.fillText(when(e.date), M + 14, y);
+      g.fillStyle = '#6B7189'; g.font = F(400, 25);
+      const bills = (e.photos || []).length;
+      g.fillText(cut(g, (e.note || '—') + (bills ? '  (' + bills + ' bill' + (bills > 1 ? 's' : '') + ')' : ''), 490), 270, y);
+      g.textAlign = 'right'; g.font = F(700, 27);
+      g.fillStyle = e.type === 'gave' ? '#B3261E' : '#C9BFB4';
+      g.fillText(e.type === 'gave' ? '₹' + money(e.amount) : '—', 800, y);
+      g.fillStyle = e.type === 'got' ? '#1E6F4F' : '#C9BFB4';
+      g.fillText(e.type === 'got' ? '₹' + money(e.amount) : '—', 980, y);
+      const b = runs.get(e.id);
+      g.fillStyle = '#20263F'; g.font = F(600, 26);
+      g.fillText('₹' + money(b) + (b < 0 ? ' Cr' : ''), W - M - 14, y);
+      g.textAlign = 'left';
+    });
+
+    if (!shown.length){
+      g.fillStyle = '#6B7189'; g.font = F(400, 28);
+      g.fillText('No entries in this period.', M + 14, y + 60);
+    }
+
+    if (pi === count - 1){
+      const by = H - 300;
+      g.fillStyle = '#F6F1E7'; g.fillRect(M, by, W - M * 2, 150);
+      g.strokeStyle = '#D9CFC0'; g.strokeRect(M, by, W - M * 2, 150);
+      g.fillStyle = '#6B7189'; g.font = F(400, 25);
+      g.fillText('Opening balance', M + 24, by + 44);
+      g.fillText('You gave in this period', M + 24, by + 86);
+      g.fillText('You got in this period', M + 24, by + 128);
+      g.textAlign = 'right'; g.font = F(600, 26); g.fillStyle = '#20263F';
+      g.fillText('₹' + money(opening), 700, by + 44);
+      g.fillStyle = '#B3261E'; g.fillText('₹' + money(mv.gave), 700, by + 86);
+      g.fillStyle = '#1E6F4F'; g.fillText('₹' + money(mv.got), 700, by + 128);
+
+      g.fillStyle = '#6B7189'; g.font = F(400, 26);
+      g.fillText(closing > 0 ? "You'll get" : closing < 0 ? "You'll give" : 'All settled', W - M - 24, by + 60);
+      g.font = F(800, 52);
+      g.fillStyle = closing > 0 ? '#1E6F4F' : closing < 0 ? '#B3261E' : '#6B7189';
+      g.fillText('₹' + money(closing), W - M - 24, by + 120);
+      g.textAlign = 'left';
+    }
+
+    g.fillStyle = '#6B7189'; g.font = F(400, 22);
+    g.fillText('Kept on the shopkeeper’s phone', M, H - 70);
+    g.textAlign = 'right';
+    g.fillText(`Page ${pi + 1} of ${count}`, W - M, H - 70);
+    g.textAlign = 'left';
+    out.push(c);
+  }
+  return out;
+}
+
+/* Bill images are loaded and decoded before the share sheet offers them, so
+   building the PDF stays synchronous — a browser only opens the share sheet
+   while it still counts as a response to the tap. */
+const imgCache = new Map();
+async function cacheImage(id, data){
+  if (!data || imgCache.has(id)) return;
+  try {
+    const img = await new Promise((res, rej) => {
+      const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = data;
+    });
+    imgCache.set(id, {img, data});
+  } catch(err){ /* skip an unreadable bill */ }
+}
+const cutText = (g, s, max) => {
+  s = String(s);
+  if (g.measureText(s).width <= max) return s;
+  let t = s;
+  while (t.length > 1 && g.measureText(t + '…').width > max) t = t.slice(0, -1);
+  return t + '…';
+};
+function wrapText(g, text, max){
+  const out = [];
+  String(text).split('\n').forEach(para => {
+    const words = para.split(/\s+/).filter(Boolean);
+    if (!words.length){ out.push(''); return; }
+    let line = '';
+    words.forEach(word => {
+      let w = word;
+      /* a single word longer than the line (a pasted link, a long name) is cut */
+      while (g.measureText(w).width > max){
+        let piece = w;
+        while (piece.length > 1 && g.measureText(piece).width > max) piece = piece.slice(0, -1);
+        if (line){ out.push(line); line = ''; }
+        out.push(piece);
+        w = w.slice(piece.length);
+      }
+      if (!w) return;
+      if (!line) line = w;
+      else if (g.measureText(line + ' ' + w).width <= max) line += ' ' + w;
+      else { out.push(line); line = w; }
+    });
+    if (line) out.push(line);
+  });
+  return out;
+}
+async function prefetchBills(p, r){
+  const all = ledgerOf(p.id);
+  const shown = r ? all.filter(e => e.date >= r.from && e.date <= r.to) : all;
+  for (const e of shown)
+    for (const ph of (e.photos || []))
+      await cacheImage(ph.id, ph.full || ph.cache || await Photos.get(ph.id));
+}
+function billsInPeriod(p, r){
+  const all = ledgerOf(p.id);
+  const shown = r ? all.filter(e => e.date >= r.from && e.date <= r.to) : all;
+  const out = [];
+  shown.forEach(e => (e.photos || []).forEach(ph => out.push({entry:e, ph})));
+  return out;
+}
+
+/* a bill photo as its own page, with a caption line */
+function billCanvas(entry, party, rec, nth, of){
+  const img = rec.img;
+  const W = 1240, H = 1754, M = 70;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const F = (w, s) => `${w} ${s}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+  g.fillStyle = '#FFFDF8'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#20263F'; g.font = F(700, 34);
+  g.fillText(when(entry.date) + '   ₹' + money(entry.amount)
+    + (entry.type === 'gave' ? ' given' : ' received'), M, 90);
+  g.fillStyle = '#6B7189'; g.font = F(400, 26);
+  g.fillText(party.name + (entry.note ? ' — ' + entry.note : ''), M, 132);
+  g.textAlign = 'right';
+  g.fillText(of > 1 ? `Bill ${nth} of ${of}` : 'Bill', W - M, 132);
+  g.textAlign = 'left';
+  const top = 180, boxH = H - top - 90, boxW = W - M * 2;
+  const k = Math.min(boxW / img.width, boxH / img.height);
+  const w = img.width * k, h = img.height * k;
+  g.drawImage(img, M + (boxW - w) / 2, top + (boxH - h) / 2, w, h);
+  return c;
+}
+
+function buildStatement(p, r, withBills){
+  const pages = statementCanvases(p, r).map(c => jpegPage(c, .86));
+  if (withBills){
+    const bills = billsInPeriod(p, r);
+    bills.forEach((b, i) => {
+      const rec = imgCache.get(b.ph.id);
+      if (rec) pages.push(jpegPage(billCanvas(b.entry, p, rec, i + 1, bills.length), .82));
+    });
+  }
+  return pdfFromJpegs(pages);
+}
+
+/* ---------------- bill card: message printed on the photo ----------------
+   WhatsApp often drops the caption when a photo is attached, so the words
+   are drawn onto the image. They are sent as the caption as well. */
+const CARD_FONT = (w, s) => `${w} ${s}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+
+function billCardCanvas(rec, message, nth, of){
+  const W = 1080, M = 46, HEAD = 128, LINE = 48;
+  const probe = document.createElement('canvas').getContext('2d');
+  probe.font = CARD_FONT(400, 34);
+  const lines = wrapText(probe, message, W - M * 2);
+  const msgH = lines.length * LINE;
+
+  const img = rec.img;
+  const k = Math.min((W - M * 2) / img.width, 1280 / img.height);
+  const pw = Math.round(img.width * k), ph = Math.round(img.height * k);
+  const H = HEAD + 44 + msgH + 26 + ph + M;
+
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  g.fillStyle = '#FFFDF8'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#9E1B32'; g.fillRect(0, 0, W, HEAD);
+  g.fillStyle = '#fff'; g.font = CARD_FONT(700, 42);
+  g.fillText(cutText(g, state.business || 'My shop', W - M * 2 - 180), M, 60);
+  g.font = CARD_FONT(400, 26); g.fillStyle = 'rgba(255,253,248,.86)';
+  g.fillText(of > 1 ? `Bill ${nth} of ${of}` : 'Bill', M, 98);
+  g.textAlign = 'right';
+  g.fillText(when(today()), W - M, 98);
+  g.textAlign = 'left';
+
+  let y = HEAD + 58;
+  g.fillStyle = '#20263F'; g.font = CARD_FONT(400, 34);
+  lines.forEach((l, i) => {
+    g.font = CARD_FONT(i === 0 ? 700 : 400, 34);
+    g.fillText(l, M, y);
+    y += LINE;
+  });
+
+  y += 20;
+  g.drawImage(img, (W - pw) / 2, y, pw, ph);
+  g.strokeStyle = '#D9CFC0'; g.lineWidth = 2;
+  g.strokeRect((W - pw) / 2, y, pw, ph);
+  return c;
+}
+
+function billCardFiles(items, message){
+  const files = [];
+  items.forEach((it, i) => {
+    const rec = imgCache.get(it.ph.id);
+    if (!rec) return;
+    const c = billCardCanvas(rec, message, i + 1, items.length);
+    files.push(jpgFile(c.toDataURL('image/jpeg', .87), `bill-${it.entry.date}-${i + 1}.jpg`));
+  });
+  return files;
+}
+function billMessage(p, e, bal, count){
+  const lines = [`${p.name} — ${count > 1 ? count + ' bills' : 'bill'} dated ${when(e.date)}`];
+  if (e.note) lines.push(e.note);
+  lines.push((e.type === 'gave' ? 'Amount: ₹' : 'Received: ₹') + money(e.amount));
+  lines.push((bal > 0 ? 'Balance due: ₹' : bal < 0 ? 'We owe you: ₹' : 'Balance: ₹')
+    + money(bal) + ' as on ' + when(today()));
+  return lines.join('\n');
+}
+function billsMessage(p, r, count, bal){
+  return [
+    `${p.name} — ${count} bill${count > 1 ? 's' : ''}${r ? ', ' + periodLabel(r) : ''}`,
+    (bal > 0 ? 'Balance due: ₹' : bal < 0 ? 'We owe you: ₹' : 'Balance: ₹')
+      + money(bal) + ' as on ' + when(today())
+  ].join('\n');
+}
+
+/* ---------------- sharing ---------------- */
+function saveBlob(blob, filename){
+  try {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+    a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+    return true;
+  } catch(e){ return false; }
+}
+async function shareFiles(files, text, filenameNote){
+  if (navigator.canShare && navigator.share){
+    try {
+      if (navigator.canShare({files})){
+        await navigator.share({files, text, title:state.business || 'Khata'});
+        return 'shared';
+      }
+    } catch(e){ if (e && e.name === 'AbortError') return 'cancelled'; }
+  }
+  files.forEach(f => saveBlob(f, f.name));
+  toast(filenameNote || 'Saved to your phone — attach it in WhatsApp');
+  return 'saved';
+}
+const fileFromBlob = (blob, name) => new File([blob], name, {type:blob.type});
+const jpgFile = (data, name) => fileFromBlob(new Blob([b64bytes(data)], {type:'image/jpeg'}), name);
+function waLink(phone, text){
+  const d = String(phone || '').replace(/\D/g,'');
+  const num = d.length === 10 ? '91' + d : d;
+  return 'https://wa.me/' + num + '?text=' + encodeURIComponent(text);
+}
+
+/* ---------------- contacts ----------------
+   Three ways in, best first:
+   1. wrapped as an app  -> the native contacts plugin reads the address book
+   2. served over https  -> the phone's own contact picker
+   3. neither            -> a .vcf file or a pasted list                    */
+const nativeContacts = () => {
+  const C = window.Capacitor;
+  return (C && C.Plugins && (C.Plugins.Contacts || C.Plugins.CapacitorContacts)) || null;
+};
+const canContacts = () => !!(navigator.contacts && navigator.contacts.select && window.ContactsManager);
+const canShareFiles = () => {
+  try {
+    return !!(navigator.canShare && navigator.share &&
+      navigator.canShare({files:[new File([new Blob(['x'])], 't.jpg', {type:'image/jpeg'})]}));
+  } catch(e){ return false; }
+};
+const tidyPhone = s => String(s || '').replace(/[^\d+]/g,'').replace(/^\+91/,'');
+
+/* shapes differ between plugin versions, so read defensively */
+function normaliseNative(rows){
+  return (Array.isArray(rows) ? rows : []).map(c => {
+    const nm = c.name || {};
+    const name = String(nm.display
+      || [nm.given, nm.middle, nm.family].filter(Boolean).join(' ')
+      || c.displayName || c.givenName || '').trim();
+    const phones = c.phones || c.phoneNumbers || [];
+    const first = phones[0];
+    const phone = tidyPhone(typeof first === 'string' ? first
+      : (first && (first.number || first.value)) || '');
+    return {name, phone};
+  }).filter(c => c.name);
+}
+async function readNativeContacts(){
+  const P = nativeContacts();
+  if (!P) return null;
+  try { if (P.requestPermissions) await P.requestPermissions({permissions:['contacts']}); }
+  catch(e){ /* older plugins ask on read instead */ }
+  let res;
+  try { res = await P.getContacts({projection:{name:true, phones:true}}); }
+  catch(e){
+    try { res = await P.getContacts(); }
+    catch(e2){ toast('The phone refused the contact list'); return []; }
+  }
+  return normaliseNative(res && (res.contacts || res.results) || res);
+}
+
+/* Android's Contacts app shares people as a .vcf file. Reading that needs no
+   permission and no internet, so it works even opened from Downloads. */
+function decodeQP(s){
+  const t = String(s).replace(/=\r?\n/g,'');
+  try { return decodeURIComponent(t.replace(/=([0-9A-Fa-f]{2})/g,'%$1')); }
+  catch(e){ return t.replace(/=[0-9A-Fa-f]{2}/g,''); }
+}
+function parseVcards(text){
+  const out = [];
+  String(text).split(/BEGIN:VCARD/i).slice(1).forEach(block => {
+    const body = block.split(/END:VCARD/i)[0]
+      .replace(/\r\n/g,'\n').replace(/=\n/g,'').replace(/\n[ \t]/g,'');
+    let fn = '', n = '', tel = '';
+    body.split('\n').forEach(raw => {
+      const at = raw.indexOf(':');
+      if (at < 0) return;
+      const head = raw.slice(0, at).toUpperCase();
+      const key = head.split(';')[0].replace(/^ITEM\d+\./,'');
+      let val = raw.slice(at + 1).trim();
+      if (/QUOTED-PRINTABLE/.test(head)) val = decodeQP(val);
+      val = val.replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\n/gi,' ').trim();
+      if (key === 'FN' && !fn) fn = val;
+      else if (key === 'N' && !n){
+        const bits = val.split(';');
+        n = [bits[1], bits[0]].filter(Boolean).join(' ').trim();
+      }
+      else if (key === 'TEL' && !tel) tel = val;
+    });
+    const name = (fn || n).trim();
+    if (name) out.push({name, phone:tidyPhone(tel)});
+  });
+  return out;
+}
+/* one person per line: "Ramesh, 9876543210" or "Ramesh 9876543210" or just a name */
+function parseContactLines(text){
+  return String(text).split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+    const bits = l.split(/[,\t;|]/).map(s => s.trim()).filter(Boolean);
+    if (bits.length > 1){
+      const num = bits.find(b => /^[+\d][\d\-() ]{5,}$/.test(b));
+      if (num) return {name:bits.filter(b => b !== num).join(' '), phone:tidyPhone(num)};
+      return {name:bits.join(' '), phone:''};
+    }
+    const m = l.match(/^(.*?)\s+([+\d][\d\-() ]{5,})$/);
+    return m ? {name:m[1].trim(), phone:tidyPhone(m[2])} : {name:l, phone:''};
+  }).filter(c => c.name);
+}
+
+function openContactList(book, found){
+  if (!found.length){ toast('No names found'); return; }
+  const have = new Set(state.parties.filter(p => p.type === book)
+    .map(p => p.name.trim().toLowerCase()));
+  const seen = new Set();
+  const list = found
+    .filter(c => { const k = c.name.trim().toLowerCase();
+      if (seen.has(k)) return false; seen.add(k); return true; })
+    .sort((a,b) => a.name.localeCompare(b.name))
+    .map(c => {
+      const had = have.has(c.name.trim().toLowerCase());
+      /* a whole address book starts unticked; a short hand-picked list starts ticked */
+      return {...c, had, pick: !had && found.length <= 12};
+    });
+  modal = {kind:'contacts', book, list, q:''};
+  drawModal();
+}
+function addPicked(){
+  const {book, list} = modal;
+  const chosen = list.filter(c => c.pick && !c.had);
+  if (!chosen.length){ toast('Tick at least one name'); return; }
+  chosen.forEach(c => state.parties.push({
+    id:uid(), name:c.name, phone:c.phone, type:book, createdAt:Date.now()
+  }));
+  closeModal(); persist(); view.tab = book; render();
+  toast(chosen.length + ' ' + book + (chosen.length === 1 ? '' : 's') + ' added');
+}
+
+async function pickContacts(book){
+  if (nativeContacts()){
+    toast('Reading your contacts…');
+    const rows = await readNativeContacts();
+    if (rows && rows.length){ openContactList(book, rows); return; }
+    if (rows){ toast('No contacts found on this phone'); return; }
+  }
+  if (!canContacts()){ modal = {kind:'contactsrc', book}; drawModal(); return; }
+  let picked;
+  try { picked = await navigator.contacts.select(['name','tel'], {multiple:true}); }
+  catch(e){ modal = {kind:'contactsrc', book}; drawModal(); return; }
+  if (!picked || !picked.length) return;
+  openContactList(book, picked.map(c => ({
+    name: ((c.name && c.name[0]) || '').trim(),
+    phone: tidyPhone((c.tel && c.tel[0]) || '')
+  })).filter(c => c.name));
+}
+
+let state = { business:'My shop', parties:[], entries:[] };
+let view  = { screen:'home', tab:'customer', partyId:null, query:'',
+              period:{customer:'all', supplier:'all'},
+              custom:{customer:null, supplier:null} };
+let modal = null;
+let saveTimer = null;
+
+const uid   = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const iso   = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+const today = () => iso(new Date());
+const esc   = s => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => {
+  const v = Math.abs(+n || 0);
+  return new Intl.NumberFormat('en-IN',
+    {minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits:2}).format(v);
+};
+const el    = document.getElementById('app');
+
+function when(iso){
+  const d = new Date(iso + 'T00:00:00');
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+/* ---------------- balances ----------------
+   gave  = money went out / they owe you   -> +
+   got   = money came in                   -> -
+   balance > 0  you'll get,  < 0  you'll give                     */
+function ledgerOf(id){
+  return state.entries.filter(e => e.partyId === id)
+    .sort((a,b) => a.date === b.date
+      ? (a.createdAt||0) - (b.createdAt||0)
+      : a.date < b.date ? -1 : 1);
+}
+function balanceOf(id){
+  return ledgerOf(id).reduce((s,e) => s + (e.type === 'gave' ? +e.amount : -e.amount), 0);
+}
+/* balance including everything up to a date — the closing balance of a period */
+function balanceAsOf(id, to){
+  return ledgerOf(id).reduce((s,e) =>
+    (!to || e.date <= to) ? s + (e.type === 'gave' ? +e.amount : -e.amount) : s, 0);
+}
+/* what actually moved inside the period */
+function movement(id, r){
+  let gave = 0, got = 0;
+  ledgerOf(id).forEach(e => {
+    if (r && (e.date < r.from || e.date > r.to)) return;
+    e.type === 'gave' ? gave += +e.amount : got += +e.amount;
+  });
+  return {gave, got};
+}
+function bookTotals(book, r){
+  let get = 0, give = 0, gave = 0, got = 0;
+  state.parties.filter(p => p.type === book).forEach(p => {
+    const b = balanceAsOf(p.id, r ? r.to : null);
+    b > 0 ? get += b : give += -b;
+    const m = movement(p.id, r);
+    gave += m.gave; got += m.got;
+  });
+  return {get, give, gave, got};
+}
+function partyById(id){ return state.parties.find(p => p.id === id); }
+
+/* ---------------- period filter ---------------- */
+const PERIODS = [
+  {id:'all',       label:'All'},
+  {id:'today',     label:'Today'},
+  {id:'week',      label:'This week'},
+  {id:'month',     label:'This month'},
+  {id:'lastmonth', label:'Last month'},
+  {id:'fy',        label:'This FY'},
+  {id:'custom',    label:'Pick dates'}
+];
+function rangeOf(book){
+  const id = view.period[book] || 'all';
+  if (id === 'all') return null;
+  const now = new Date(), t = today();
+  if (id === 'today') return {id, from:t, to:t};
+  if (id === 'week'){
+    const d = new Date(now); d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return {id, from:iso(d), to:t};
+  }
+  if (id === 'month') return {id, from:t.slice(0,8) + '01', to:t};
+  if (id === 'lastmonth'){
+    const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const last  = new Date(now.getFullYear(), now.getMonth(), 0);
+    return {id, from:iso(first), to:iso(last)};
+  }
+  if (id === 'fy'){
+    const y = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return {id, from:y + '-04-01', to:t};
+  }
+  const c = view.custom[book];
+  return (c && c.from && c.to) ? {id:'custom', from:c.from, to:c.to} : null;
+}
+function periodLabel(r){
+  if (!r) return 'Every entry in this book';
+  if (r.from === r.to) return when(r.from);
+  return when(r.from) + ' to ' + when(r.to);
+}
+
+/* ---------------- persistence ---------------- */
+function persist(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    const ok = await Store.set(KEY, JSON.stringify(state));
+    if (!ok) toast('Could not save on this device');
+  }, 180);
+}
+function toast(msg){
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg; t.setAttribute('role','status');
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+
+/* ======================= screens ======================= */
+function render(){
+  if (view.screen === 'party' && !partyById(view.partyId)) view.screen = 'home';
+  el.innerHTML = view.screen === 'home' ? home()
+               : view.screen === 'party' ? party()
+               : settings();
+  el.querySelector('main')?.scrollTo(0,0);
+  if (modal) drawModal();
+}
+
+function home(){
+  const book = view.tab;
+  const r = rangeOf(book);
+  const t = bookTotals(book, r);
+  const q = view.query.trim().toLowerCase();
+  const inBook = state.parties.filter(p => p.type === book);
+  const counts = {
+    customer: state.parties.filter(p => p.type === 'customer').length,
+    supplier: state.parties.filter(p => p.type === 'supplier').length
+  };
+
+  let list = inBook.map(p => ({
+    ...p,
+    bal: balanceAsOf(p.id, r ? r.to : null),
+    mv: movement(p.id, r),
+    last: ledgerOf(p.id).filter(e => !r || (e.date >= r.from && e.date <= r.to)).slice(-1)[0]
+  }));
+  const active = r ? list.filter(p => p.mv.gave || p.mv.got) : list;
+  list = active
+    .filter(p => !q || p.name.toLowerCase().includes(q) || (p.phone||'').includes(q))
+    .sort(r
+      ? (a,b) => (b.mv.gave + b.mv.got) - (a.mv.gave + a.mv.got) || a.name.localeCompare(b.name)
+      : (a,b) => Math.abs(b.bal) - Math.abs(a.bal) || a.name.localeCompare(b.name));
+
+  const rows = list.map(p => `
+    <button class="row" data-open="${p.id}">
+      <span class="initial">${esc(p.name.trim()[0] || '?').toUpperCase()}</span>
+      <span class="row-mid">
+        <b>${esc(p.name)}</b>
+        <span>${r
+          ? [p.mv.gave ? 'gave ₹' + money(p.mv.gave) : '', p.mv.got ? 'got ₹' + money(p.mv.got) : '']
+              .filter(Boolean).join(', ')
+          : (p.last ? when(p.last.date) : 'No entries yet')}</span>
+      </span>
+      <span class="row-amt">
+        <b class="num ${p.bal > 0 ? 'get' : p.bal < 0 ? 'give' : 'settled'}">₹${money(p.bal)}</b>
+        <span>${p.bal > 0 ? "you'll get" : p.bal < 0 ? "you'll give" : 'settled'}</span>
+      </span>
+    </button>`).join('');
+
+  const blank = inBook.length === 0
+    ? `<div class="empty"><b>Your ${book} book is empty</b>
+         Add the first ${book}, then record what you gave or got.</div>`
+    : active.length === 0
+      ? `<div class="empty"><b>Nothing in this period</b>
+           No ${book} entry between ${periodLabel(r).toLowerCase()}. Try a wider period.</div>`
+      : `<div class="empty">No ${book} matches “${esc(view.query)}”.</div>`;
+
+  return `
+  <header class="cover">
+    <div class="cover-top">
+      <span class="shop">${esc(state.business || 'My shop')}</span>
+      <button class="cover-btn" data-go="settings" aria-label="Backup and settings">⚙</button>
+    </div>
+
+    <div class="switch">
+      <button data-tab="customer" aria-current="${book === 'customer'}">
+        Customers<small>${counts.customer}</small></button>
+      <button data-tab="supplier" aria-current="${book === 'supplier'}">
+        Suppliers<small>${counts.supplier}</small></button>
+    </div>
+
+    <div class="totals">
+      ${r ? `
+        <div class="tot give"><span>You gave</span><strong class="num">₹${money(t.gave)}</strong></div>
+        <div class="tot get"><span>You got</span><strong class="num">₹${money(t.got)}</strong></div>
+        <div class="closing">
+          <span>Balance on ${when(r.to)}</span>
+          <b class="num ${t.get - t.give > 0 ? 'get' : t.get - t.give < 0 ? 'give' : 'settled'}">₹${money(t.get - t.give)}${
+            t.get - t.give > 0 ? " to get" : t.get - t.give < 0 ? " to give" : ''}</b>
+        </div>`
+      : `
+        <div class="tot get"><span>You'll get</span><strong class="num">₹${money(t.get)}</strong></div>
+        <div class="tot give"><span>You'll give</span><strong class="num">₹${money(t.give)}</strong></div>`}
+    </div>
+    <p class="caption">${esc(periodLabel(r))}</p>
+  </header>
+
+  <div class="chips">
+    ${PERIODS.map(p => `<button class="chip" data-period="${p.id}"
+      aria-pressed="${(view.period[book] || 'all') === p.id}">${p.label}</button>`).join('')}
+  </div>
+
+  ${inBook.length > 4 ? `<div class="search">
+    <input id="q" type="search" placeholder="Search ${book} name or phone" value="${esc(view.query)}">
+  </div>` : ''}
+
+  <main>${rows || blank}</main>
+
+  <div class="dock">
+    <button class="btn" data-add-party="${book}">Add ${book}</button>
+  </div>`;
+}
+
+function party(){
+  const p = partyById(view.partyId);
+  const rows = ledgerOf(p.id);
+  const bal = balanceOf(p.id);
+  const r = rangeOf(p.type);
+  const shown = r ? rows.filter(e => e.date >= r.from && e.date <= r.to) : rows;
+  const mv = movement(p.id, r);
+  let run = 0;
+
+  const body = shown.slice().reverse().map(e => {
+    const idx = rows.indexOf(e);
+    run = rows.slice(0, idx + 1).reduce((s,x) => s + (x.type === 'gave' ? +x.amount : -x.amount), 0);
+    const shots = e.photos || [];
+    return `
+    <div class="entry" data-entry="${e.id}" role="button" tabindex="0">
+      ${shots.length ? `<span class="entry-shot" data-row-shots="${e.id}" role="button" tabindex="0"
+        aria-label="View ${shots.length} bill ${shots.length === 1 ? 'photo' : 'photos'}">
+        <img src="${shots[0].thumb}" alt="">${shots.length > 1 ? `<i>${shots.length}</i>` : ''}</span>` : ''}
+      <span class="entry-when">
+        <b>${when(e.date)}</b>
+        <span>${e.note ? esc(e.note) : 'Balance ₹' + money(run) + (run > 0 ? " you'll get" : run < 0 ? " you'll give" : '')}</span>
+      </span>
+      <span class="entry-col num ${e.type === 'gave' ? 'give' : 'blank'}">${e.type === 'gave' ? '₹' + money(e.amount) : '—'}</span>
+      <span class="entry-col num ${e.type === 'got' ? 'get' : 'blank'}">${e.type === 'got' ? '₹' + money(e.amount) : '—'}</span>
+    </div>`;
+  }).join('');
+
+  return `
+  <header class="bar">
+    <button data-go="home" aria-label="Back">←</button>
+    <b>${esc(p.name)}</b>
+    <button data-share="${p.id}" aria-label="Share statement or bills">⇪</button>
+    <button data-edit-party="${p.id}" aria-label="Edit ${esc(p.name)}">⋮</button>
+  </header>
+
+  <div class="sheet">
+    <span>${bal > 0 ? "You'll get" : bal < 0 ? "You'll give" : 'All settled'}</span>
+    <strong class="num ${bal > 0 ? 'get' : bal < 0 ? 'give' : 'settled'}">₹${money(bal)}</strong>
+  </div>
+  ${r ? `<div class="period">
+    <span>${esc(periodLabel(r))}</span>
+    <b>gave <span class="give num">₹${money(mv.gave)}</span>
+       &nbsp;got <span class="get num">₹${money(mv.got)}</span></b>
+  </div>` : ''}
+
+  ${shown.length ? `<div class="colhead"><i>Entry</i><u>You gave</u><u>You got</u></div>` : ''}
+  <main>${body || (rows.length
+    ? `<div class="empty"><b>Nothing in this period</b>
+         ${esc(p.name)} has no entry for ${esc(periodLabel(r).toLowerCase())}.
+         The balance above is the full one.</div>`
+    : `<div class="empty"><b>Nothing written yet</b>
+         Record goods given on credit, or a payment received.</div>`)}</main>
+
+  <div class="dock">
+    <button class="btn out" data-new="gave">You gave</button>
+    <button class="btn in" data-new="got">You got</button>
+  </div>`;
+}
+
+function settings(){
+  return `
+  <header class="bar">
+    <button data-go="home" aria-label="Back">←</button>
+    <b>Backup &amp; settings</b>
+  </header>
+  <main>
+    <div class="block">
+      <h2>Shop name</h2>
+      <p>Shown at the top of your book and in reminders.</p>
+      <label class="field"><span>Name</span>
+        <input id="bizname" value="${esc(state.business)}" placeholder="e.g. Sri Balaji Stores"></label>
+      <button class="btn" data-save-biz>Save name</button>
+    </div>
+
+    <div class="block">
+      <h2>Move this book to another phone</h2>
+      <p>${state.parties.length} ${state.parties.length === 1 ? 'party' : 'parties'} ·
+         ${state.entries.length} ${state.entries.length === 1 ? 'entry' : 'entries'} ·
+         ${photoStats().n} bill ${photoStats().n === 1 ? 'photo' : 'photos'}${
+           photoStats().bytes ? ' (' + readableSize(photoStats().bytes) + ')' : ''}.
+         Save a backup file, send it to the other phone, then load it there.</p>
+      <div class="pair">
+        <button class="btn" data-export-json>Save backup file</button>
+        <button class="btn quiet" data-export-csv>Export CSV</button>
+      </div>
+      <p class="note">The backup file carries the bill photos with it. Copied text does not —
+        use it only when the download is blocked, then paste it into WhatsApp, email or Notes.</p>
+      <button class="btn quiet" data-copy-json>Copy backup text</button>
+    </div>
+
+    <div class="block">
+      <h2>Load a backup</h2>
+      <p>Choose the backup file, or paste the copied text. Merge keeps both books;
+         replace wipes this phone's book first.</p>
+      <div class="pair">
+        <button class="btn" data-pick-file>Choose backup file</button>
+        <button class="btn quiet" data-paste-json>Paste backup text</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <h2>Sharing and contacts on this phone</h2>
+      <p>${nativeContacts()
+        ? 'This is the installed app, so it reads your phone contacts directly.'
+        : canContacts()
+          ? 'You can pick people straight from your phone contacts.'
+          : 'This copy cannot reach your phone contacts. A web page is only allowed to when it is opened from an https address, or built into an installed app. Until then, share the people you want from Contacts as a .vcf file and load that, or paste a list — both are behind “Add from contacts”.'}</p>
+      <p>${canShareFiles()
+        ? 'Statements and bill photos can go straight into WhatsApp.'
+        : 'This browser will not hand files to WhatsApp directly. Statements and bills are saved to your phone instead, and you attach them in WhatsApp yourself.'}</p>
+    </div>
+
+    <div class="block">
+      <h2 class="danger">Erase this book</h2>
+      <p>Deletes every party and entry on this phone. Save a backup first.</p>
+      <button class="btn quiet danger" data-wipe>Erase everything</button>
+    </div>
+  </main>`;
+}
+
+/* ======================= modals ======================= */
+function drawModal(){
+  const old = document.querySelector('.veil'); if (old) old.remove();
+  if (!modal) return;
+  const veil = document.createElement('div');
+  veil.className = 'veil';
+  veil.innerHTML = `<div class="card" role="dialog" aria-modal="true">${modalBody()}</div>`;
+  document.body.appendChild(veil);
+  veil.addEventListener('click', e => { if (e.target === veil) closeModal(); });
+  if (!modal.drawn){
+    modal.drawn = true;
+    const focus = veil.querySelector('input,textarea');
+    if (focus){ focus.focus(); if (focus.select) focus.select(); }
+  }
+}
+function closeModal(){ modal = null; document.querySelector('.veil')?.remove(); }
+
+function modalBody(){
+  const m = modal;
+
+  if (m.kind === 'party'){
+    const p = m.id ? partyById(m.id) : null;
+    return `
+      <h3>${p ? 'Edit ' + esc(p.name) : 'New ' + m.type}</h3>
+      ${!p ? `<button class="btn quiet" data-pick-contacts="${m.type}"
+        style="margin-bottom:13px">Add from contacts</button>` : ''}
+      <label class="field"><span>Name</span>
+        <input id="pname" value="${esc(p?.name || '')}" placeholder="Full name or shop name"></label>
+      <label class="field"><span>Phone (optional)</span>
+        <input id="pphone" type="tel" inputmode="tel" value="${esc(p?.phone || '')}" placeholder="10-digit number"></label>
+      <label class="field"><span>Book</span>
+        <select id="ptype">
+          <option value="customer" ${(p?.type || m.type) === 'customer' ? 'selected' : ''}>Customer</option>
+          <option value="supplier" ${(p?.type || m.type) === 'supplier' ? 'selected' : ''}>Supplier</option>
+        </select></label>
+      <div class="pair">
+        <button class="btn quiet" data-cancel>Cancel</button>
+        <button class="btn" data-save-party="${m.id || ''}">${p ? 'Save changes' : 'Add to book'}</button>
+      </div>
+      ${p ? `<p class="note">Deleting removes ${ledgerOf(p.id).length} entries too.</p>
+        <button class="btn quiet danger" data-del-party="${p.id}">Delete party</button>` : ''}`;
+  }
+
+  if (m.kind === 'entry'){
+    const e = m.id ? state.entries.find(x => x.id === m.id) : null;
+    const type = e?.type || m.type;
+    const d = m.draft || {};
+    return `
+      <h3>${e ? 'Edit entry' : type === 'gave' ? 'You gave' : 'You got'}</h3>
+      <div class="amount">
+        <em>₹</em>
+        <input id="eamt" type="text" inputmode="decimal"
+          value="${esc(d.amount ?? (e ? e.amount : ''))}" placeholder="0">
+      </div>
+      <label class="field"><span>Date</span>
+        <input id="edate" type="date" value="${esc(d.date ?? (e?.date || today()))}" max="2999-12-31"></label>
+      <label class="field"><span>Note (optional)</span>
+        <input id="enote" value="${esc(d.note ?? (e?.note || ''))}" placeholder="e.g. 2 bags rice, cash received"></label>
+      <label class="field" style="margin-bottom:6px"><span>${
+        (m.shots || []).length
+          ? 'Bill photos — ' + m.shots.length + ' of ' + MAX_SHOTS
+          : 'Bill photos (optional)'}</span></label>
+      <div class="thumbs">
+        ${(m.shots || []).map((s,i) => `
+          <span class="thumb">
+            <button type="button" data-view-shot="${i}" style="display:block;width:100%;height:100%">
+              <img src="${s.thumb}" alt="Bill photo ${i+1}"></button>
+            <button type="button" class="x" data-drop-shot="${i}" aria-label="Remove photo ${i+1}">✕</button>
+          </span>`).join('')}
+        ${(m.shots || []).length < MAX_SHOTS
+          ? `<button type="button" class="addshot" data-add-shot aria-label="Add bill photos">＋</button>` : ''}
+      </div>
+      <div class="pair">
+        <button class="btn quiet" data-cancel>Cancel</button>
+        <button class="btn ${type === 'gave' ? 'out' : 'in'}"
+          data-save-entry="${m.id || ''}" data-type="${type}">${e ? 'Save entry' : 'Add entry'}</button>
+      </div>
+      ${e ? `<button class="btn quiet danger" data-del-entry="${e.id}">Delete entry</button>` : ''}
+      ${e && (m.shots || []).length ? `<button class="btn quiet" data-share-shots style="margin-top:9px">Send ${
+        m.shots.length > 1 ? 'these bills' : 'this bill'} on WhatsApp</button>` : ''}`;
+  }
+
+  if (m.kind === 'range'){
+    const c = view.custom[m.book] || {};
+    return `
+      <h3>Pick dates for the ${m.book} book</h3>
+      <label class="field"><span>From</span>
+        <input id="rfrom" type="date" value="${c.from || today().slice(0,8) + '01'}" max="2999-12-31"></label>
+      <label class="field"><span>To</span>
+        <input id="rto" type="date" value="${c.to || today()}" max="2999-12-31"></label>
+      <div class="pair">
+        <button class="btn quiet" data-cancel>Cancel</button>
+        <button class="btn" data-save-range>Show this period</button>
+      </div>`;
+  }
+
+  if (m.kind === 'share'){
+    const p = partyById(m.id), r = rangeOf(p.type);
+    const all = ledgerOf(p.id);
+    const shown = r ? all.filter(e => e.date >= r.from && e.date <= r.to) : all;
+    const bills = billsInPeriod(p, r).length;
+    const wait = bills && !m.ready;
+    return `
+      <h3>Share ${esc(p.name)}</h3>
+      <p class="note" style="margin-bottom:13px">
+        ${shown.length} ${shown.length === 1 ? 'entry' : 'entries'}, ${esc(periodLabel(r).toLowerCase())}${
+          bills ? `, ${bills} bill ${bills === 1 ? 'photo' : 'photos'}` : ''}</p>
+      <div class="stack">
+        <button class="btn" data-statement="plain">Statement as PDF</button>
+        ${bills ? `<button class="btn quiet" data-statement="bills" ${wait ? 'disabled' : ''}>${
+          wait ? 'Getting the bills ready…' : 'Statement with the bill photos'}</button>
+        <button class="btn quiet" data-bills ${wait ? 'disabled' : ''}>Just the ${
+          bills === 1 ? 'bill photo' : bills + ' bill photos'}</button>` : ''}
+        ${p.phone ? `<button class="btn quiet" data-remind="${p.id}">Payment reminder message</button>` : ''}
+        <button class="btn quiet" data-cancel>Cancel</button>
+      </div>`;
+  }
+
+  if (m.kind === 'billmsg'){
+    const n = m.items.length;
+    return `
+      <h3>Send ${n > 1 ? n + ' bills' : 'the bill'}</h3>
+      <label class="field"><span>Message</span>
+        <textarea id="billbox">${esc(m.message)}</textarea></label>
+      <p class="note" style="margin-bottom:12px">These words are printed on the photo as well,
+        so they arrive even if WhatsApp drops the caption.</p>
+      <div class="stack">
+        <button class="btn in" data-send-bill>Send on WhatsApp</button>
+        <button class="btn quiet" data-copy-billmsg>Copy the message</button>
+        <button class="btn quiet" data-cancel>Cancel</button>
+      </div>`;
+  }
+
+  if (m.kind === 'contactsrc'){
+    return `
+      <h3>Reach your phone contacts</h3>
+      <p class="note" style="margin-bottom:13px">A web page is only allowed into your address book
+        when it comes from an https address, or when it is built into an installed app.
+        This copy is neither, so your phone is blocking it — not the app.</p>
+      <div class="stack">
+        <button class="btn" data-vcf>Choose a contacts file (.vcf)</button>
+        <button class="btn quiet" data-paste-contacts>Paste a list of names</button>
+        <button class="btn quiet" data-cancel>Cancel</button>
+      </div>
+      <p class="note" style="margin-top:12px">For the .vcf: open Contacts, select the people you
+        deal with, tap Share, and save the file to this phone.</p>`;
+  }
+
+  if (m.kind === 'pastecontacts'){
+    return `
+      <h3>Paste your ${m.book} list</h3>
+      <p class="note" style="margin-bottom:10px">One person per line, name first:
+        Ramesh, 9876543210</p>
+      <label class="field"><span>Names</span>
+        <textarea id="contactbox" placeholder="Ramesh Kirana, 9876543210
+Sunita Tailors, 9123456780
+Murugan"></textarea></label>
+      <div class="pair">
+        <button class="btn quiet" data-cancel>Cancel</button>
+        <button class="btn" data-read-contacts>Read the list</button>
+      </div>`;
+  }
+
+  if (m.kind === 'contacts'){
+    const picked = m.list.filter(c => c.pick && !c.had).length;
+    const dupes = m.list.filter(c => c.had).length;
+    const q = (m.q || '').trim().toLowerCase();
+    const rows = m.list.map((c,i) => ({c, i}))
+      .filter(({c}) => !q || c.name.toLowerCase().includes(q) || (c.phone || '').includes(q));
+    return `
+      <h3>${m.list.length} in your contacts</h3>
+      <p class="note" style="margin-bottom:10px">Tick the people you keep a book for.${
+        dupes ? ' ' + dupes + ' already in this book.' : ''}</p>
+      ${m.list.length > 12 ? `<label class="field">
+        <input id="pickq" type="search" placeholder="Search contacts" value="${esc(m.q || '')}"></label>` : ''}
+      <button class="btn quiet" data-pick-all style="margin-bottom:10px">${
+        q ? 'Tick all found' : 'Tick all or none'}</button>
+      <div class="picklist">
+        ${rows.length ? rows.map(({c,i}) => `
+          <label class="pickrow${c.had ? ' had' : ''}">
+            <input type="checkbox" data-pick="${i}" ${c.pick && !c.had ? 'checked' : ''}
+              ${c.had ? 'disabled' : ''}>
+            <span><b>${esc(c.name)}</b>${
+              c.had ? '<em>already in the book</em>' : c.phone ? '<em>' + esc(c.phone) + '</em>' : ''}</span>
+          </label>`).join('')
+        : `<div class="empty" style="padding:26px">Nobody matches “${esc(m.q || '')}”.</div>`}
+      </div>
+      <div class="pair">
+        <button class="btn quiet" data-cancel>Cancel</button>
+        <button class="btn" data-add-picked>Add <span id="pickn">${picked}</span> ${m.book}${
+          picked === 1 ? '' : 's'}</button>
+      </div>`;
+  }
+
+  if (m.kind === 'paste'){
+    return `
+      <h3>Paste backup text</h3>
+      <label class="field"><span>Backup text from the other phone</span>
+        <textarea id="pastebox" placeholder='{"app":"khata-offline", ...}'></textarea></label>
+      <div class="pair">
+        <button class="btn quiet" data-cancel>Cancel</button>
+        <button class="btn" data-read-paste>Read backup</button>
+      </div>`;
+  }
+
+  if (m.kind === 'import'){
+    const d = m.data;
+    return `
+      <h3>Backup found</h3>
+      <p class="note" style="margin-bottom:12px">
+        ${d.parties.length} parties · ${d.entries.length} entries${
+          d.photoData ? ' · ' + Object.keys(d.photoData).length + ' bill photos' : ''}${
+          d.exportedAt ? '<br>Saved ' + when(String(d.exportedAt).slice(0,10)) : ''}
+        ${d.business ? '<br>Shop: ' + esc(d.business) : ''}</p>
+      <div class="pair">
+        <button class="btn" data-import="merge">Merge into this book</button>
+        <button class="btn quiet danger" data-import="replace">Replace this book</button>
+      </div>
+      <button class="btn quiet" data-cancel style="margin-top:10px">Cancel</button>`;
+  }
+
+  if (m.kind === 'confirm'){
+    return `
+      <h3>${esc(m.title)}</h3>
+      <p class="note" style="margin-bottom:14px">${esc(m.text)}</p>
+      <div class="pair">
+        <button class="btn quiet" data-cancel>Keep it</button>
+        <button class="btn out" data-confirm>${esc(m.ok)}</button>
+      </div>`;
+  }
+
+  if (m.kind === 'remind'){
+    const p = partyById(m.id), bal = balanceOf(p.id);
+    const text = reminderText(p, bal);
+    return `
+      <h3>Payment reminder</h3>
+      <label class="field"><span>Message</span>
+        <textarea id="remindbox">${esc(text)}</textarea></label>
+      <div class="pair">
+        <button class="btn quiet" data-copy-remind>Copy message</button>
+        <button class="btn in" data-wa="${esc(p.phone)}">Open WhatsApp</button>
+      </div>
+      <button class="btn quiet" data-cancel style="margin-top:10px">Close</button>`;
+  }
+  return '';
+}
+
+function reminderText(p, bal){
+  const dir = bal > 0 ? 'due from you' : 'we owe you';
+  return `Namaste ${p.name},\n\nBalance ₹${money(bal)} is ${dir} as on ${when(today())}.\n\n${state.business || 'My shop'}`;
+}
+
+/* ======================= actions ======================= */
+function openPartyModal(type, id){ modal = {kind:'party', type, id}; drawModal(); }
+function openEntryModal(type, id){
+  const e = id ? state.entries.find(x => x.id === id) : null;
+  modal = {kind:'entry', type, id, shots:(e?.photos || []).map(p => ({...p})), gone:[]};
+  drawModal();
+  if (modal.shots.length) prefetchShots(modal.shots);
+}
+async function prefetchShots(shots){
+  for (const s of shots){
+    if (!s.full && !s.cache){
+      const data = await Photos.get(s.id);
+      if (data) s.cache = data;
+    }
+    await cacheImage(s.id, s.full || s.cache);
+  }
+}
+/* hold on to what's typed so adding a photo doesn't clear the form */
+function stashDraft(){
+  if (!modal || modal.kind !== 'entry') return;
+  const a = document.getElementById('eamt');
+  if (!a) return;
+  modal.draft = {
+    amount: a.value,
+    date: document.getElementById('edate').value,
+    note: document.getElementById('enote').value
+  };
+}
+
+let activeViewer = null;
+
+function openViewer(shots, start){
+  let i = Math.max(0, Math.min(start || 0, shots.length - 1));
+  const many = shots.length > 1;
+  const v = document.createElement('div');
+  v.className = 'viewer';
+  v.innerHTML = `
+    <div class="vtop">
+      <button data-close-view aria-label="Close photo">✕</button>
+      <b class="vlabel"></b>
+    </div>
+    <div class="vbody">Opening photo…</div>
+    ${many ? `<div class="vdots">${shots.map(() => '<i></i>').join('')}</div>
+    <div class="vnav">
+      <button data-step="-1">Previous</button>
+      <button data-step="1">Next</button>
+    </div>` : ''}`;
+  document.body.appendChild(v);
+
+  const body = v.querySelector('.vbody');
+  const label = v.querySelector('.vlabel');
+  const dots = v.querySelectorAll('.vdots i');
+  const steps = v.querySelectorAll('[data-step]');
+
+  async function show(){
+    const s = shots[i];
+    label.textContent = many ? `Bill ${i + 1} of ${shots.length}` : 'Bill photo';
+    dots.forEach((d, k) => d.classList.toggle('on', k === i));
+    steps.forEach(b => b.disabled = (+b.dataset.step < 0 ? i === 0 : i === shots.length - 1));
+    if (!s.cache) s.cache = s.full || await Photos.get(s.id) || '';
+    if (shots[i] !== s) return;                  // moved on while loading
+    body.innerHTML = s.cache
+      ? `<img src="${s.cache}" alt="Bill ${i + 1}">`
+      : 'This photo is not on this phone. It was probably left out of the backup.';
+  }
+  function step(d){
+    const next = i + d;
+    if (next < 0 || next >= shots.length) return;
+    i = next; body.textContent = 'Opening photo…'; show();
+  }
+  function close(){ v.remove(); activeViewer = null; }
+
+  v.addEventListener('click', ev => {
+    const nav = ev.target.closest('[data-step]');
+    if (nav){ step(+nav.dataset.step); return; }
+    if (ev.target.closest('[data-close-view]') || ev.target === v || ev.target === body) close();
+  });
+
+  let x0 = null;
+  body.addEventListener('touchstart', ev => { x0 = ev.touches[0].clientX; }, {passive:true});
+  body.addEventListener('touchend', ev => {
+    if (x0 === null) return;
+    const dx = ev.changedTouches[0].clientX - x0;
+    x0 = null;
+    if (Math.abs(dx) > 45) step(dx < 0 ? 1 : -1);
+  }, {passive:true});
+
+  activeViewer = {step, close};
+  show();
+}
+
+function savePartyFromModal(id){
+  const name  = document.getElementById('pname').value.trim();
+  const phone = document.getElementById('pphone').value.trim();
+  const type  = document.getElementById('ptype').value;
+  if (!name){ toast('Enter a name first'); return; }
+  if (id){
+    Object.assign(partyById(id), {name, phone, type});
+  } else {
+    const p = {id:uid(), name, phone, type, createdAt:Date.now()};
+    state.parties.push(p);
+    view = {...view, tab:type, screen:'party', partyId:p.id};
+  }
+  closeModal(); persist(); render(); toast(id ? 'Saved' : 'Added to book');
+}
+
+function saveEntryFromModal(id, type){
+  const raw = document.getElementById('eamt').value.replace(/[^0-9.]/g,'');
+  const amt = parseFloat(raw);
+  const date = document.getElementById('edate').value || today();
+  const note = document.getElementById('enote').value.trim();
+  if (!amt || amt <= 0){ toast('Enter an amount above zero'); return; }
+
+  const shots = modal.shots || [], gone = modal.gone || [];
+  const photos = shots.map(s => ({id:s.id, thumb:s.thumb, bytes:s.bytes || 0}));
+
+  if (id){
+    Object.assign(state.entries.find(e => e.id === id), {amount:amt, date, note, photos});
+  } else {
+    state.entries.push({id:uid(), partyId:view.partyId, type, amount:amt, date, note, photos, createdAt:Date.now()});
+  }
+  closeModal(); persist(); render();
+  toast(id ? 'Entry saved' : (type === 'gave' ? 'Recorded ₹' : 'Received ₹') + money(amt));
+
+  (async () => {
+    for (const s of shots) if (s.full) await Photos.put(s.id, s.full);
+    for (const pid of gone) await Photos.del(pid);
+  })();
+}
+
+/* ---------------- export ---------------- */
+async function bundle(withPhotos){
+  const b = {
+    app:'khata-offline', version:2, exportedAt:new Date().toISOString(),
+    business:state.business, parties:state.parties,
+    entries:withPhotos ? state.entries
+      : state.entries.map(e => ({...e, photos:(e.photos || []).map(p => ({id:p.id, bytes:p.bytes || 0}))}))
+  };
+  if (withPhotos){
+    b.photoData = {};
+    for (const e of state.entries)
+      for (const ph of (e.photos || [])){
+        const data = await Photos.get(ph.id);
+        if (data) b.photoData[ph.id] = data;
+      }
+  }
+  return b;
+}
+function download(text, filename, mime){
+  try{
+    const url = URL.createObjectURL(new Blob([text], {type:mime}));
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+    a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1500);
+    toast('Saved ' + filename);
+  } catch(e){ toast('Download blocked — use “Copy backup text”'); }
+}
+async function exportJson(){
+  const p = photoStats();
+  if (p.n) toast('Packing ' + p.n + ' bill ' + (p.n === 1 ? 'photo' : 'photos') + '…');
+  const text = JSON.stringify(await bundle(true), null, 2);
+  download(text, `khata-backup-${today()}.json`, 'application/json');
+}
+function exportCsv(){
+  const q = s => '"' + String(s ?? '').replace(/"/g,'""') + '"';
+  const lines = [['Date','Party','Book','Phone','You gave','You got','Note','Bill photos'].join(',')];
+  state.entries.slice()
+    .sort((a,b) => a.date < b.date ? -1 : 1)
+    .forEach(e => {
+      const p = partyById(e.partyId) || {name:'(deleted)', type:'', phone:''};
+      lines.push([q(e.date), q(p.name), q(p.type), q(p.phone),
+        e.type === 'gave' ? e.amount : '', e.type === 'got' ? e.amount : '',
+        q(e.note), (e.photos || []).length || ''].join(','));
+    });
+  download(lines.join('\n'), `khata-entries-${today()}.csv`, 'text/csv');
+}
+async function copyText(text, msg){
+  try { await navigator.clipboard.writeText(text); toast(msg); }
+  catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand && document.execCommand('copy');
+    ta.remove(); toast(ok ? msg : 'Copy not allowed here — select the text manually');
+  }
+}
+
+/* ---------------- import ---------------- */
+function readBackup(text){
+  let d;
+  try { d = JSON.parse(text); }
+  catch(e){ toast('That text is not a valid backup'); return; }
+  if (!d || !Array.isArray(d.parties) || !Array.isArray(d.entries)){
+    toast('Backup is missing its parties or entries'); return;
+  }
+  modal = {kind:'import', data:d}; drawModal();
+}
+function applyImport(mode){
+  const d = modal.data;
+  const clean = {
+    parties: d.parties.filter(p => p && p.name).map(p => ({
+      id: p.id || uid(), name: String(p.name), phone: String(p.phone || ''),
+      type: p.type === 'supplier' ? 'supplier' : 'customer', createdAt: p.createdAt || Date.now()
+    })),
+    entries: d.entries.filter(e => e && +e.amount > 0 && e.partyId).map(e => ({
+      id: e.id || uid(), partyId: e.partyId, type: e.type === 'got' ? 'got' : 'gave',
+      amount: +e.amount, date: (e.date || today()).slice(0,10),
+      note: String(e.note || ''), createdAt: e.createdAt || Date.now(),
+      photos: (Array.isArray(e.photos) ? e.photos : [])
+        .filter(p => p && p.id && (p.thumb || (d.photoData && d.photoData[p.id])))
+        .map(p => ({id:p.id, thumb:p.thumb || '', bytes:p.bytes || 0}))
+    }))
+  };
+  if (mode === 'replace'){
+    state = {business: d.business || state.business, parties: clean.parties, entries: clean.entries};
+  } else {
+    const pids = new Set(state.parties.map(p => p.id));
+    const eids = new Set(state.entries.map(e => e.id));
+    clean.parties.forEach(p => { if (!pids.has(p.id)) state.parties.push(p); });
+    clean.entries.forEach(e => { if (!eids.has(e.id)) state.entries.push(e); });
+  }
+  const live = new Set(state.parties.map(p => p.id));
+  state.entries = state.entries.filter(e => live.has(e.partyId));
+  const incoming = d.photoData || {};
+  closeModal(); persist(); view.screen = 'home'; render();
+  toast(mode === 'replace' ? 'Book replaced' : 'Book merged');
+
+  (async () => {
+    const ids = Object.keys(incoming);
+    for (const id of ids) await Photos.put(id, incoming[id]);
+    if (ids.length) toast(ids.length + ' bill ' + (ids.length === 1 ? 'photo' : 'photos') + ' restored');
+  })();
+}
+
+/* ======================= events ======================= */
+document.addEventListener('click', ev => {
+  const hit = sel => ev.target.closest(sel);
+  let n;
+
+  if ((n = hit('[data-go]'))){ view.screen = n.dataset.go; render(); return; }
+  if ((n = hit('[data-tab]'))){ view.tab = n.dataset.tab; view.query = ''; render(); return; }
+  if ((n = hit('[data-period]'))){
+    const id = n.dataset.period;
+    if (id === 'custom'){ modal = {kind:'range', book:view.tab}; drawModal(); return; }
+    view.period[view.tab] = id; render(); return;
+  }
+  if (hit('[data-save-range]')){
+    const from = document.getElementById('rfrom').value;
+    const to   = document.getElementById('rto').value;
+    if (!from || !to){ toast('Pick both dates'); return; }
+    if (from > to){ toast('The from date is after the to date'); return; }
+    const book = modal.book;
+    view.custom[book] = {from, to};
+    view.period[book] = 'custom';
+    closeModal(); render(); return;
+  }
+  if ((n = hit('[data-open]'))){ view.screen = 'party'; view.partyId = n.dataset.open; render(); return; }
+  if ((n = hit('[data-add-party]'))){ openPartyModal(n.dataset.addParty, null); return; }
+  if ((n = hit('[data-edit-party]'))){ openPartyModal(null, n.dataset.editParty); return; }
+  if ((n = hit('[data-save-party]'))){ savePartyFromModal(n.dataset.saveParty || null); return; }
+  if ((n = hit('[data-new]'))){ openEntryModal(n.dataset.new, null); return; }
+  if ((n = hit('[data-row-shots]'))){
+    const e = state.entries.find(x => x.id === n.dataset.rowShots);
+    if (e && (e.photos || []).length) openViewer(e.photos.map(p => ({...p})), 0);
+    return;
+  }
+  if ((n = hit('[data-entry]'))){ openEntryModal(null, n.dataset.entry); return; }
+  if ((n = hit('[data-save-entry]'))){ saveEntryFromModal(n.dataset.saveEntry || null, n.dataset.type); return; }
+  if (hit('[data-cancel]')){ closeModal(); return; }
+
+  if (hit('[data-add-shot]')){
+    if ((modal.shots || []).length >= MAX_SHOTS){ toast(MAX_SHOTS + ' photos per entry is the limit'); return; }
+    stashDraft(); document.getElementById('shot').click(); return;
+  }
+  if ((n = hit('[data-view-shot]'))){ openViewer(modal.shots, +n.dataset.viewShot); return; }
+  if ((n = hit('[data-drop-shot]'))){
+    stashDraft();
+    const i = +n.dataset.dropShot, s = modal.shots[i];
+    if (s && !s.full) modal.gone.push(s.id);
+    modal.shots.splice(i, 1); drawModal(); return;
+  }
+
+  if ((n = hit('[data-del-party]'))){
+    const id = n.dataset.delParty, p = partyById(id);
+    modal = {kind:'confirm', title:'Delete ' + p.name + '?', ok:'Delete',
+      text:'This also deletes ' + ledgerOf(id).length + ' entries. It cannot be undone.',
+      run(){ Photos.dropAll(ledgerOf(id));
+             state.parties = state.parties.filter(x => x.id !== id);
+             state.entries = state.entries.filter(e => e.partyId !== id);
+             view.screen = 'home'; persist(); toast('Deleted'); }};
+    drawModal(); return;
+  }
+  if ((n = hit('[data-del-entry]'))){
+    const id = n.dataset.delEntry;
+    modal = {kind:'confirm', title:'Delete this entry?', ok:'Delete',
+      text:'Any bill photo on it goes too, and the balance will be recalculated.',
+      run(){ Photos.dropAll(state.entries.filter(e => e.id === id));
+             state.entries = state.entries.filter(e => e.id !== id);
+             persist(); toast('Entry deleted'); }};
+    drawModal(); return;
+  }
+  if (hit('[data-confirm]')){ const run = modal.run; closeModal(); run(); render(); return; }
+
+  if (hit('[data-save-biz]')){
+    state.business = document.getElementById('bizname').value.trim() || 'My shop';
+    persist(); render(); toast('Name saved'); return;
+  }
+  if (hit('[data-export-json]')){ exportJson(); return; }
+  if (hit('[data-export-csv]')){ exportCsv(); return; }
+  if (hit('[data-copy-json]')){
+    bundle(false).then(b => copyText(JSON.stringify(b),
+      photoStats().n ? 'Copied — text backups leave photos out' : 'Backup text copied'));
+    return;
+  }
+  if (hit('[data-pick-file]')){ document.getElementById('picker').click(); return; }
+  if (hit('[data-paste-json]')){ modal = {kind:'paste'}; drawModal(); return; }
+  if (hit('[data-read-paste]')){ readBackup(document.getElementById('pastebox').value.trim()); return; }
+  if ((n = hit('[data-import]'))){ applyImport(n.dataset.import); return; }
+
+  if (hit('[data-wipe]')){
+    modal = {kind:'confirm', title:'Erase the whole book?', ok:'Erase everything',
+      text:'All parties and entries on this phone will be gone. Save a backup first if you may need it.',
+      run(){ Photos.dropAll(state.entries);
+             state = {business:state.business, parties:[], entries:[]};
+             view = {screen:'home', tab:'customer', partyId:null, query:'',
+                     period:{customer:'all', supplier:'all'}, custom:{customer:null, supplier:null}};
+             persist(); toast('Book erased'); }};
+    drawModal(); return;
+  }
+
+  if ((n = hit('[data-remind]'))){ modal = {kind:'remind', id:n.dataset.remind}; drawModal(); return; }
+
+  if ((n = hit('[data-share]'))){
+    const id = n.dataset.share, p = partyById(id);
+    const r = rangeOf(p.type);
+    modal = {kind:'share', id, ready:!billsInPeriod(p, r).length};
+    drawModal();
+    if (!modal.ready) prefetchBills(p, r).then(() => {
+      if (modal && modal.kind === 'share' && modal.id === id){ modal.ready = true; drawModal(); }
+    });
+    return;
+  }
+  if ((n = hit('[data-statement]'))){
+    const p = partyById(modal.id), withBills = n.dataset.statement === 'bills';
+    const r = rangeOf(p.type);
+    closeModal();
+    try {
+      const blob = buildStatement(p, r, withBills);
+      const slug = p.name.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').toLowerCase() || 'party';
+      const file = fileFromBlob(blob, `statement-${slug}-${today()}.pdf`);
+      shareFiles([file], reminderText(p, balanceAsOf(p.id, r ? r.to : null)),
+        'Statement saved to your phone — attach it in WhatsApp');
+    } catch(err){ toast('Could not build the statement'); }
+    return;
+  }
+  if (hit('[data-bills]')){
+    const p = partyById(modal.id), r = rangeOf(p.type);
+    const items = billsInPeriod(p, r).filter(b => imgCache.has(b.ph.id));
+    if (!items.length){ toast('No bill photo is on this phone for that period'); return; }
+    const bal = balanceAsOf(p.id, r ? r.to : null);
+    modal = {kind:'billmsg', items, message:billsMessage(p, r, items.length, bal)};
+    drawModal(); return;
+  }
+  if (hit('[data-share-shots]')){
+    const e = state.entries.find(x => x.id === modal.id);
+    const p = partyById(view.partyId);
+    const items = (e.photos || []).filter(ph => imgCache.has(ph.id)).map(ph => ({entry:e, ph}));
+    if (!items.length){ toast('Give the photos a moment, then try again'); return; }
+    modal = {kind:'billmsg', items,
+      message:billMessage(p, e, balanceOf(p.id), items.length)};
+    drawModal(); return;
+  }
+  if (hit('[data-send-bill]')){
+    const msg = document.getElementById('billbox').value.trim();
+    const files = billCardFiles(modal.items, msg);
+    closeModal();
+    if (!files.length){ toast('Those photos are not on this phone'); return; }
+    shareFiles(files, msg,
+      files.length + (files.length > 1 ? ' bills saved' : ' bill saved')
+      + ' to your phone — attach in WhatsApp');
+    return;
+  }
+  if (hit('[data-copy-billmsg]')){
+    copyText(document.getElementById('billbox').value, 'Message copied'); return;
+  }
+  if ((n = hit('[data-pick-contacts]'))){ pickContacts(n.dataset.pickContacts); return; }
+  if (hit('[data-vcf]')){ document.getElementById('vcf').click(); return; }
+  if (hit('[data-paste-contacts]')){ modal = {kind:'pastecontacts', book:modal.book}; drawModal(); return; }
+  if (hit('[data-read-contacts]')){
+    openContactList(modal.book, parseContactLines(document.getElementById('contactbox').value));
+    return;
+  }
+  if (hit('[data-pick-all]')){
+    const q = (modal.q || '').trim().toLowerCase();
+    const shown = modal.list.filter(c => !c.had &&
+      (!q || c.name.toLowerCase().includes(q) || (c.phone || '').includes(q)));
+    const on = shown.some(c => c.pick);
+    shown.forEach(c => { c.pick = q ? true : !on; });
+    drawModal(); return;
+  }
+  if (hit('[data-add-picked]')){ addPicked(); return; }
+  if (hit('[data-copy-remind]')){ copyText(document.getElementById('remindbox').value, 'Message copied'); return; }
+  if ((n = hit('[data-wa]'))){
+    window.open(waLink(n.dataset.wa, document.getElementById('remindbox').value), '_blank');
+    return;
+  }
+});
+
+document.addEventListener('input', ev => {
+  if (ev.target.id === 'pickq' && modal && modal.kind === 'contacts'){
+    modal.q = ev.target.value;
+    drawModal();
+    const box = document.getElementById('pickq');
+    if (box){ box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+    return;
+  }
+  if (ev.target.id === 'q'){
+    view.query = ev.target.value;
+    const keep = document.activeElement === ev.target;
+    render();
+    if (keep){
+      const q = document.getElementById('q');
+      if (q){ q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+    }
+  }
+});
+
+document.addEventListener('change', ev => {
+  const box = ev.target.closest && ev.target.closest('[data-pick]');
+  if (box && modal && modal.kind === 'contacts'){
+    modal.list[+box.dataset.pick].pick = box.checked;
+    const n = modal.list.filter(c => c.pick && !c.had).length;
+    const out = document.getElementById('pickn');
+    if (out) out.textContent = n;
+  }
+});
+
+document.getElementById('vcf').addEventListener('change', ev => {
+  const f = ev.target.files[0];
+  ev.target.value = '';
+  if (!f) return;
+  const book = modal && modal.book ? modal.book : view.tab;
+  const r = new FileReader();
+  r.onload = () => {
+    const text = String(r.result);
+    const found = /BEGIN:VCARD/i.test(text) ? parseVcards(text) : parseContactLines(text);
+    openContactList(book, found);
+  };
+  r.onerror = () => toast('Could not read that file');
+  r.readAsText(f);
+});
+
+document.getElementById('shot').addEventListener('change', async ev => {
+  const files = Array.from(ev.target.files || []).filter(f => /^image\//.test(f.type));
+  const skipped = (ev.target.files || []).length - files.length;
+  ev.target.value = '';
+  if (!modal || modal.kind !== 'entry') return;
+  if (skipped) toast(skipped + (skipped === 1 ? ' file was not a photo' : ' files were not photos'));
+  if (!files.length) return;
+
+  const room = MAX_SHOTS - modal.shots.length;
+  const batch = files.slice(0, room);
+  if (files.length > room) toast('Only ' + room + ' more ' + (room === 1 ? 'photo fits' : 'photos fit') + ' on this entry');
+
+  for (let k = 0; k < batch.length; k++){
+    toast(batch.length > 1 ? `Shrinking photo ${k + 1} of ${batch.length}…` : 'Shrinking the photo for storage…');
+    try {
+      const s = await shrink(batch[k]);
+      if (!modal || modal.kind !== 'entry') return;
+      modal.shots.push(s);
+      await cacheImage(s.id, s.full);
+      drawModal();
+    } catch(e){ toast('Could not read one of those photos'); }
+  }
+  if (modal && modal.kind === 'entry'){
+    drawModal();
+    const n = modal.shots.length;
+    toast(n + (n === 1 ? ' photo attached' : ' photos attached'));
+  }
+});
+
+document.addEventListener('keydown', ev => {
+  if (activeViewer){
+    if (ev.key === 'Escape'){ activeViewer.close(); return; }
+    if (ev.key === 'ArrowRight'){ activeViewer.step(1); return; }
+    if (ev.key === 'ArrowLeft'){ activeViewer.step(-1); return; }
+  }
+  if (ev.key === 'Escape' && modal) closeModal();
+  if (ev.key === 'Enter' && modal && ev.target.tagName === 'INPUT'){
+    const go = document.querySelector('.veil [data-save-party],.veil [data-save-entry]');
+    if (go) go.click();
+    return;
+  }
+  if ((ev.key === 'Enter' || ev.key === ' ') && !modal && ev.target.matches
+      && ev.target.matches('[data-entry],[data-row-shots]')){
+    ev.preventDefault(); ev.target.click();
+  }
+});
+
+document.getElementById('picker').addEventListener('change', ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => readBackup(String(r.result));
+  r.onerror = () => toast('Could not read that file');
+  r.readAsText(f);
+  ev.target.value = '';
+});
+
+/* ======================= boot ======================= */
+/* Offline caching, but only when served over http(s). Opened straight from
+   the phone's file system there is nothing to cache and the browser refuses. */
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+(async () => {
+  const raw = await Store.get(KEY);
+  if (raw){
+    try {
+      const d = JSON.parse(raw);
+      if (d && Array.isArray(d.parties)) state = {business:d.business || 'My shop', parties:d.parties, entries:d.entries || []};
+    } catch(e){ /* keep empty book */ }
+  }
+  render();
+})();
+</script>
+</body>
+</html>
